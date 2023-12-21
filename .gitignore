@@ -1,0 +1,6 @@
+/ARMSim-Windows
+/Jupiter
+*/*.exe
+*/*.zip
+*/*.docx
+*/*.png
