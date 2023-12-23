@@ -1,6 +1,6 @@
 .text
 
-@ Input string via stdin
+@ Input string via stdi
 mov r0, #1
 ldr r1, =CharArray
 mov r2, #80
@@ -8,46 +8,57 @@ swi 0x6a
 
 @ Print help string for stdout
 mov r0, #1
-ldr r1, =lower_str
+ldr r1, =upper_str
 swi 0x69
 
 ldr r2, =CharArray
-mov r4, #0 @ Total words len
-mov r5, #1 @ Toggle 1 if previous char was space | 0 if previous char not a space
+mov r5, #0
 
 find_space:
     ldrb r6, [r2], #1
-    cmp r6, #0 @ проверка, является ли текущий символ концом строки
-    beq row_end
+    add r5, r5, #1
+    cmp r6, #0 @ compare to end of line
+    beq start_print
 
-    cmp r6, #' ' @ сравнение с ASCII-кодом пробела
-    beq space_found
+    cmp r6, #' ' @ compare to space
+    bne not_space
 
+    add r4, r5, #0
+    add r2, r2, #0
     b find_space
 
-space_found:
-    @ Указатель начала строки смещается на следующий символ после пробела
+not_space:
+    add r3, r4, #0
     add r2, r2, #0
+    b find_space
+
+start_print:
+    mov r2, #0
+    mov r5, #0
+    mov r6, #0
+    ldr r2, =CharArray
 
 check_char:
     ldrb r6, [r2], #1
-    cmp r6, #0 @ проверка, является ли текущий символ концом строки
+    cmp r6, #0 @ if end of line
     beq row_end
 
-    cmp r6, #'A' @ сравнение с ASCII-кодом заглавной буквы 'A'
-    blt not_uppercase @ если символ не заглавная буква, пропустить
-    cmp r6, #'Z' @ сравнение с ASCII-кодом заглавной буквы 'Z'
-    bgt not_uppercase @ если символ не заглавная буква, пропустить
-    sub r6, r6, #'A' - 'a' @ конвертация в нижний регистр
+    add r5, r5, #1
+    cmp r3, r5 @ if last space
+    beq row_end
 
-not_uppercase:
-    add r4, r4, #1
+    cmp r6, #'a' 
+    blt not_lowercase
+    cmp r6, #'z' 
+    bgt not_lowercase
+    add r6, r6, #'A' - 'a' @ to uppercase
 
+not_lowercase:
     ldr r8, =Char_output
-    str r6, [r8] @ сохранение символа в памяти
+    str r6, [r8] @ save character
 
     mov r0, #1
-    ldr r1, =Char_output @ печать текущего символа из памяти
+    ldr r1, =Char_output @ print character
     swi 0x69
 
     b check_char
@@ -66,4 +77,4 @@ CharArray: .asciz "Hello World, This is a sample sentence."
 Char_output: .skip 10
 symbol_space_output: .asciz " "
 blank_line: .asciz "\n"
-lower_str: .asciz "String with all lowercase letters:\n"
+upper_str: .asciz "String with all uppercase letters without last word:\n"
